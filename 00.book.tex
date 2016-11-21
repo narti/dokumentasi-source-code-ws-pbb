@@ -1,0 +1,193 @@
+\documentclass[pdftex,12pt, oneside]{article}
+
+%\usepackage[paperwidth=8.5in, paperheight=13in]{geometry} % Folio
+\usepackage[paperwidth=8.27in, paperheight=11.69in]{geometry} % A4
+
+\usepackage{makeidx}         % allows index generation
+\usepackage{graphicx}        % standard LaTeX graphics tool
+                             % when including figure files
+\usepackage[bottom]{footmisc}% places footnotes at page bottom
+\usepackage[english]{babel}
+\usepackage{enumerate}
+\usepackage{paralist}
+\usepackage{float}
+\usepackage{gensymb}  
+\usepackage{listings}
+\usepackage{color}
+\usepackage{mathtools} % atau \usepackage{amsmath}
+\renewcommand{\baselinestretch}{1.5}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolor}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+  backgroundcolor=\color{backcolor},
+  commentstyle=\color{codegreen},
+  keywordstyle=\color{magenta},
+  stringstyle=\color{codepurple},
+  basicstyle=\footnotesize,
+  breakatwhitespace=false,
+  breaklines=true,
+  captionpos=b,
+  keepspaces=true,
+  numbers=left,
+  numbersep=5pt,
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  tabsize=2
+}
+
+\lstset{style=mystyle}
+
+
+\begin{document}
+\sloppy % biar section ga melebar melewati kertas
+
+\begin{center}
+{\large \textit{SOURCE CODE} PROGRAM \textit{WEB SERVICE} PBB-P2.}
+\\[1cm]
+25 November 2016\\
+Priyanto Tamami, S.Kom.
+\end{center}
+
+%\frontmatter%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{\textit{SOURCE CODE} PEMBUATAN TABEL}
+
+\textit{Source code} untuk pembuatan tabel menggunakan bahasa SQL biasa, adapun tabel yang digunakan ada 4 (empat) buah dengan rincian sebagai berikut :
+
+
+  \subsection{Tabel SPPT}
+  
+  Tabel ini sudah ada terlebih dahulu sebagai tempat untuk menampung seluruh ketetapan yang ada pada PBB-P2, \textit{source code} dari pembuatan tabel SPPT ini adalah sebagai berikut :
+  
+  \begin{lstlisting}
+    
+  \end{lstlisting}
+  
+  \subsection{Tabel PEMBAYARAN\_SPPT}
+  
+  Tabel ini pun sudah ada pada basis data yang digunakan sebagai tempat menyimpan atau mencatat transaksi pembayaran. \textit{Source code} dari pembuatan tabel ini adalah sebagai berikut :
+  
+  \begin{lstlisting}
+  \end{lstlisting}
+  
+  \subsection{Tabel LOG\_TRX\_PEMBAYARAN}
+  
+  Tabel ini digunakan untuk menyimpan atau mencatat proses transaksi pembayaran yang berhasil dilakukan. \textit{Source code} untuk tabel LOG\_TRX\_PEMBAYARAN ini adalah sebagai berikut :
+  
+  \begin{lstlisting}    
+CREATE TABLE LOG_TRX_PEMBAYARAN (	
+  NOP VARCHAR2(18 BYTE) NOT NULL,
+  THN VARCHAR2(4 BYTE) NOT NULL,
+  NTPD VARCHAR2(30 BYTE) NOT NULL,
+  POKOK NUMBER,
+  NAMA_WP VARCHAR2(50 BYTE),
+  ALAMAT_OP VARCHAR2(150 BYTE),
+  MATA_ANGGARAN VARCHAR2(15 BYTE),
+  MA_SANKSI VARCHAR2(20 BYTE),
+  DENDA NUMBER,
+  PEMBAYARAN_KE NUMBER(2,0),
+  IP_CLIENT VARCHAR2(30 BYTE),
+  CONSTRAINT LOG_TRX_PEMBAYARAN_PK PRIMARY KEY 
+    ("NOP", "THN", "NTPD"));  
+  \end{lstlisting}
+  
+  \subsection{Tabel LOG\_REVERSAL}
+  
+  Tabel ini digunakan untuk mencatat historis transaksi \textit{reversal} pembayaran yang telah selesai dilakukan. \textit{Source code} untuk tabel ini adalah sebagai berikut :
+  
+  \begin{lstlisting}
+CREATE TABLE LOG_REVERSAL (	
+  NOP VARCHAR2(20 BYTE) NOT NULL,
+  THN VARCHAR2(4 BYTE) NOT NULL,
+  NTPD VARCHAR2(30 BYTE) NOT NULL,
+  IP_CLIENT VARCHAR2(30 BYTE),
+  CONSTRAINT LOG_REVERSAL_PK PRIMARY KEY ("NOP", "THN", "NTPD"));    
+  \end{lstlisting}
+
+
+\section{\textit{SOURCE CODE STORE PROCEDURE}}
+
+
+\section{\textit{SOURCE CODE BUILD TOOLS}}
+
+
+\section{\textit{SOURCE CODE} KONFIGURASI application.properties}
+
+
+\section{\textit{SOURCE CODE} KONFIGURASI log4j.properties}
+
+
+\section{\textit{SOURCE CODE} AppConfig.java}
+
+
+\section{\textit{SOURCE CODE} HibernateConfiguration.java}
+
+
+\section{\textit{SOURCE CODE} SerialConstant.java}
+
+
+\section{\textit{SOURCE CODE} StatusRespond.java}
+
+
+\section{\textit{SOURCE CODE} SpptRestController.java}
+
+
+\section{\textit{SOUCE CODE} StoreProceduresDao.java}
+
+
+\section{\textit{SOURCE CODE} StoreProceduresDaoImpl.java}
+
+
+\section{\textit{SOURCE CODE} AppInitializer.java}
+
+
+\section{\textit{SOURCE CODE} PembayaranSppt.java}
+
+
+\section{\textit{SOURCE CODE} ReversalPembayaran.java}
+
+
+\section{\textit{SOURCE CODE} Sppt.java}
+
+
+\section{\textit{SOURCE CODE} Status.java}
+
+
+\section{\textit{SOURCE CODE} StatusInq.java}
+
+
+\section{\textit{SOURCE CODE} StatusRev.java}
+
+
+\section{\textit{SOURCE CODE} StatusTrx.java}
+
+
+\section{\textit{SOURCE CODE} PembayaranServices.java}
+
+
+\section{\textit{SOURCE CODE} PembayaranServicesImpl.java}
+
+
+\section{\textit{SOURCE CODE} ReversalServices.java}
+
+
+\section{\textit{SOURCE CODE} ReversalServicesImpl.java}
+
+
+\section{\textit{SOURCE CODE} SpptServices.java}
+
+
+\section{\textit{SOURCE CODE} SpptServicesImpl.java}
+
+
+\end{document}

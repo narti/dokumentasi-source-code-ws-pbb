@@ -198,35 +198,848 @@ CREATE TABLE LOG_REVERSAL (
 
 \subsection{\textit{STORE PROCEDURE} SPPT\_TERHUTANG}
 
+\textit{Store procedure} ini akan bertugas melakukan \textit{query} ke basis data untuk kepentingan menampilkan informasi tagihan PBB-P2. Kode untuk \textit{store procedure} ini adalah sebagai berikut :
 
+  \begin{lstlisting}
+create or replace procedure sppt_terhutang(c_sppt out sys_refcursor, nop in varchar, thn in varchar) is
+  v_kdPropinsi sppt.kd_propinsi%type;
+  v_kdDati2 sppt.kd_dati2%type;
+  v_kdKecamatan sppt.kd_kecamatan%type;
+  v_kdKelurahan sppt.kd_kelurahan%type;
+  v_kdBlok sppt.kd_blok%type;
+  v_noUrut sppt.no_urut%type;
+  v_kdJnsOp sppt.kd_jns_op%type;
+begin
+  v_kdPropinsi := substr(nop,1,2);
+  v_kdDati2 := substr(nop,3,2);
+  v_kdKecamatan := substr(nop,5,3);
+  v_kdKelurahan := substr(nop,8,3);
+  v_kdBlok := substr(nop,11,3);
+  v_noUrut := substr(nop,14,4);
+  v_kdJnsOp := substr(nop,18,1);
+
+  open c_sppt for
+    SELECT
+    (sppt.kd_propinsi
+    ||sppt.kd_dati2
+    ||sppt.kd_kecamatan
+    ||sppt.kd_kelurahan
+    ||sppt.kd_blok
+    ||sppt.no_urut
+    ||sppt.kd_jns_op)              AS NOP,
+    sppt.thn_pajak_sppt            AS THN,
+    sppt.nm_wp_sppt                AS NAMA,
+    kel.nm_kelurahan||' - '||kec.nm_kecamatan as "ALAMAT_OP",
+    sppt.pbb_yg_harus_dibayar_sppt AS POKOK,
+    case
+      when thn > '2013' and sysdate between (tgl_jatuh_tempo_sppt+1) and add_months(tgl_jatuh_tempo_sppt, 1) then ceil(1 * 0.02 * pbb_yg_harus_dibayar_sppt)
+      when thn > '2013' and sysdate between (tgl_jatuh_tempo_sppt+1) and add_months(tgl_jatuh_tempo_sppt, 2) then ceil(2 * 0.02 * pbb_yg_harus_dibayar_sppt)
+      when thn > '2013' and sysdate between (tgl_jatuh_tempo_sppt+1) and add_months(tgl_jatuh_tempo_sppt, 3) then ceil(3 * 0.02 * pbb_yg_harus_dibayar_sppt)
+      when thn > '2013' and sysdate between (tgl_jatuh_tempo_sppt+1) and add_months(tgl_jatuh_tempo_sppt, 4) then ceil(4 * 0.02 * pbb_yg_harus_dibayar_sppt)
+      when thn > '2013' and sysdate between (tgl_jatuh_tempo_sppt+1) and add_months(tgl_jatuh_tempo_sppt, 5) then ceil(5 * 0.02 * pbb_yg_harus_dibayar_sppt)
+      when thn > '2013' and sysdate between (tgl_jatuh_tempo_sppt+1) and add_months(tgl_jatuh_tempo_sppt, 6) then ceil(6 * 0.02 * pbb_yg_harus_dibayar_sppt)
+      when thn > '2013' and sysdate between (tgl_jatuh_tempo_sppt+1) and add_months(tgl_jatuh_tempo_sppt, 7) then ceil(7 * 0.02 * pbb_yg_harus_dibayar_sppt)
+      when thn > '2013' and sysdate between (tgl_jatuh_tempo_sppt+1) and add_months(tgl_jatuh_tempo_sppt, 8) then ceil(8 * 0.02 * pbb_yg_harus_dibayar_sppt)
+      when thn > '2013' and sysdate between (tgl_jatuh_tempo_sppt+1) and add_months(tgl_jatuh_tempo_sppt, 9) then ceil(9 * 0.02 * pbb_yg_harus_dibayar_sppt)
+      when thn > '2013' and sysdate between (tgl_jatuh_tempo_sppt+1) and add_months(tgl_jatuh_tempo_sppt, 10) then ceil(10 * 0.02 * pbb_yg_harus_dibayar_sppt)
+      when thn > '2013' and sysdate between (tgl_jatuh_tempo_sppt+1) and add_months(tgl_jatuh_tempo_sppt, 11) then ceil(11 * 0.02 * pbb_yg_harus_dibayar_sppt)
+      when thn > '2013' and sysdate between (tgl_jatuh_tempo_sppt+1) and add_months(tgl_jatuh_tempo_sppt, 12) then ceil(12 * 0.02 * pbb_yg_harus_dibayar_sppt)
+      when thn > '2013' and sysdate between (tgl_jatuh_tempo_sppt+1) and add_months(tgl_jatuh_tempo_sppt, 13) then ceil(13 * 0.02 * pbb_yg_harus_dibayar_sppt)
+      when thn > '2013' and sysdate between (tgl_jatuh_tempo_sppt+1) and add_months(tgl_jatuh_tempo_sppt, 14) then ceil(14 * 0.02 * pbb_yg_harus_dibayar_sppt)
+      when thn > '2013' and sysdate between (tgl_jatuh_tempo_sppt+1) and add_months(tgl_jatuh_tempo_sppt, 15) then ceil(15 * 0.02 * pbb_yg_harus_dibayar_sppt)
+      when thn > '2013' and sysdate > add_months(tgl_jatuh_tempo_sppt, 15) then ceil(15 * 0.02 * pbb_yg_harus_dibayar_sppt)
+      else 0
+    end as denda,
+    sppt.status_pembayaran_sppt
+  FROM sppt
+  join ref_kecamatan kec on (
+     kec.kd_propinsi = sppt.kd_propinsi
+    and kec.kd_dati2  = sppt.kd_dati2
+    and kec.kd_kecamatan = sppt.kd_kecamatan)
+  join ref_kelurahan kel on (
+     kel.kd_propinsi = sppt.kd_propinsi
+    and kel.kd_dati2 = sppt.kd_dati2
+    and kel.kd_kecamatan = sppt.kd_kecamatan
+    and kel.kd_kelurahan = sppt.kd_kelurahan)
+  where
+    sppt.kd_propinsi = v_kdPropinsi and
+    sppt.kd_dati2 = v_kdDati2 and
+    sppt.kd_kecamatan = v_kdKecamatan and
+    sppt.kd_kelurahan = v_kdKelurahan and
+    sppt.kd_blok = v_kdBlok and
+    sppt.no_urut = v_noUrut and
+    sppt.kd_jns_op = v_kdJnsOp and
+    sppt.thn_pajak_sppt = thn;
+end;
+  \end{lstlisting}
 
 \subsection{\textit{STORE PROCEDURE} PROSES\_PEMBAYARAN}
 
+\textit{Store procedure} ini digunakan untuk melakukan pencatatan pembayaran. Kode untuk \textit{store procedure} ini adalah sebagai berikut :
+
+  \begin{lstlisting}
+create or replace procedure proses_pembayaran(c_proses_pembayaran out sys_refcursor,
+    nop in varchar, thn in varchar, tgl_bayar in date, ip_client in varchar)
+is
+  v_kdPropinsi sppt.kd_propinsi%type;
+  v_kdDati2 sppt.kd_dati2%type;
+  v_kdKecamatan sppt.kd_kecamatan%type;
+  v_kdKelurahan sppt.kd_kelurahan%type;
+  v_kdBlok sppt.kd_blok%type;
+  v_noUrut sppt.no_urut%type;
+  v_kdJnsOp sppt.kd_jns_op%type;
+  v_pokokTemp sppt.pbb_yg_harus_dibayar_sppt%type;
+  v_dendaTemp numeric;
+  v_tglJatuhTempo sppt.tgl_jatuh_tempo_sppt%type;
+  v_kdKanwilBank sppt.kd_kanwil_bank%type;
+  v_kdKppbbBank sppt.kd_kppbb_bank%type;
+  v_kdBankTunggal sppt.kd_bank_tunggal%type;
+  v_kdBankPersepsi sppt.kd_bank_persepsi%type;
+  v_kdTp sppt.kd_tp%type;
+  v_statusPembayaranSppt sppt.status_pembayaran_sppt%type;
+  v_pembayaranKe numeric;
+  v_tglRekam date;
+  v_jamRekam timestamp;
+
+  v_ntpd varchar2(50);
+  v_namaWp sppt.nm_wp_sppt%type;
+  v_panjangNamaWp number;
+  v_znt dat_op_bumi.kd_znt%type;
+  v_nilaiSistemBumi dat_op_bumi.nilai_sistem_bumi%type;
+  v_mataAnggaran varchar2(20); -- '4.1.1.11.01'; -- ref_jns_sektor.kd_sektor = 02
+                             -- '4.1.1.11.02'; -- ref_jns_sektor.kd_sektor = 01
+  v_mataAnggaranSanksi varchar2(20);
+  v_kdSektor ref_kelurahan.kd_sektor%type;
+  v_nmKelurahan ref_kelurahan.nm_kelurahan%type;
+  v_nmKecamatan ref_kecamatan.nm_kecamatan%type;
+
+begin
+  -- error code in c_proses_pembayaran
+  -- 01 : NO DATA FOUND
+  -- 02 : POKOK PEMBAYARAN BERBEDA DENGAN TAGIHAN
+  -- 03 : SPPT SUDAH TERBAYAR
+  -- 04 : TAGIHAN SPPT DIBATALKAN
+
+  -- set parameter nop
+  v_kdPropinsi := substr(nop,1,2);
+  v_kdDati2 := substr(nop,3,2);
+  v_kdKecamatan := substr(nop,5,3);
+  v_kdKelurahan := substr(nop,8,3);
+  v_kdBlok := substr(nop,11,3);
+  v_noUrut := substr(nop,14,4);
+  v_kdJnsOp := substr(nop,18,1);
+
+  -- query data dari tabel sppt
+  select pbb_yg_harus_dibayar_sppt, tgl_jatuh_tempo_sppt, kd_kanwil_bank,
+    kd_kppbb_bank, kd_bank_tunggal, kd_bank_persepsi, kd_tp, status_pembayaran_sppt,
+    nm_wp_sppt
+  into v_pokokTemp, v_tglJatuhTempo, v_kdKanwilBank,
+    v_kdKppbbBank, v_kdBankTunggal, v_kdBankPersepsi, v_kdTp, v_statusPembayaranSppt,
+    v_namaWp
+  from sppt
+  where thn_pajak_sppt = thn
+    and kd_propinsi = v_kdPropinsi
+    and kd_dati2 = v_kdDati2
+    and kd_kecamatan = v_kdKecamatan
+    and kd_kelurahan = v_kdKelurahan
+    and kd_blok = v_kdBlok
+    and no_urut = v_noUrut
+    and kd_jns_op = v_kdJnsOp;
+
+  if(v_tglJatuhTempo = NULL) then
+    open c_proses_pembayaran for
+      select '01' as kode_error from dual; -- NO DATA FOUND
+    goto exit_karena_error;
+  end if;
+
+  -- get data from dat_op_bumi
+  select kd_znt, nilai_sistem_bumi
+  into v_znt, v_nilaiSistemBumi
+  from dat_op_bumi
+  where kd_propinsi = v_kdPropinsi
+    and kd_dati2 = v_kdDati2
+    and kd_kecamatan = v_kdKecamatan
+    and kd_kelurahan = v_kdKelurahan
+    and kd_blok = v_kdBlok
+    and no_urut = v_noUrut
+    and kd_jns_op = v_kdJnsOp;
+
+  -- ambil kode sektor dan nama kelurahan
+  select kd_sektor, nm_kelurahan
+  into v_kdSektor, v_nmKelurahan
+  from ref_kelurahan
+  where kd_propinsi = v_kdPropinsi
+    and kd_dati2 = v_kdDati2
+    and kd_kecamatan = v_kdKecamatan
+    and kd_kelurahan = v_kdKelurahan;
+
+  -- ambil nama kecamatan
+  select nm_kecamatan
+  into v_nmKecamatan
+  from ref_kecamatan
+  where kd_propinsi = v_kdPropinsi
+    and kd_dati2 = v_kdDati2
+    and kd_kecamatan = v_kdKecamatan;
+
+  -- cek pokok harus sama dengan pbb_yg_harus_dibayar_sppt
+  --if(v_pokokTemp != pokok) then
+  --  open c_proses_pembayaran for
+  --    select '02' as kode_error from dual; -- pokok pembayaran yang dibayarkan berbeda dengan sismiop
+  --  return;
+  --end if;
+  -- update: pembayaran langsung diambil dari db
+
+  -- bila status pembayaran 1 atau v_pokokTemp = 0, tidak perlu dibayarkan, sudah terbayar
+  if(v_statusPembayaranSppt = '1' or v_pokokTemp = 0) then
+    open c_proses_pembayaran for
+      select '03' as kode_error from dual;
+    goto exit_karena_error;
+  elsif(v_statusPembayaranSppt = 2) then
+  -- bila status pembayaran 2, tidak perlu dibayarkan, tagihan dibatalkan
+    open c_proses_pembayaran for
+      select '04' as kode_error from dual;
+    goto exit_karena_error;
+  end if;
+
+  -- cek denda
+  if(thn > '2013' and tgl_bayar between (v_tglJatuhTempo+1) and add_months(v_tglJatuhTempo,1)) then
+    v_dendaTemp := ceil(1 * 0.02 * v_pokokTemp);
+  elsif (thn > '2013' and tgl_bayar between (v_tglJatuhTempo+1) and add_months(v_tglJatuhTempo,2)) then
+    v_dendaTemp := ceil(2 * 0.02 * v_pokokTemp);
+  elsif (thn > '2013' and tgl_bayar between (v_tglJatuhTempo+1) and add_months(v_tglJatuhTempo,3)) then
+    v_dendaTemp := ceil(3 * 0.02 * v_pokokTemp);
+  elsif (thn > '2013' and tgl_bayar between (v_tglJatuhTempo+1) and add_months(v_tglJatuhTempo,4)) then
+    v_dendaTemp := ceil(4 * 0.02 * v_pokokTemp);
+  elsif (thn > '2013' and tgl_bayar between (v_tglJatuhTempo+1) and add_months(v_tglJatuhTempo,5)) then
+    v_dendaTemp := ceil(5 * 0.02 * v_pokokTemp);
+  elsif (thn > '2013' and tgl_bayar between (v_tglJatuhTempo+1) and add_months(v_tglJatuhTempo,6)) then
+    v_dendaTemp := ceil(6 * 0.02 * v_pokokTemp);
+  elsif (thn > '2013' and tgl_bayar between (v_tglJatuhTempo+1) and add_months(v_tglJatuhTempo,7)) then
+    v_dendaTemp := ceil(7 * 0.02 * v_pokokTemp);
+  elsif (thn > '2013' and tgl_bayar between (v_tglJatuhTempo+1) and add_months(v_tglJatuhTempo,8)) then
+    v_dendaTemp := ceil(8 * 0.02 * v_pokokTemp);
+  elsif (thn > '2013' and tgl_bayar between (v_tglJatuhTempo+1) and add_months(v_tglJatuhTempo,9)) then
+    v_dendaTemp := ceil(9 * 0.02 * v_pokokTemp);
+  elsif (thn > '2013' and tgl_bayar between (v_tglJatuhTempo+1) and add_months(v_tglJatuhTempo,10)) then
+    v_dendaTemp := ceil(10 * 0.02 * v_pokokTemp);
+  elsif (thn > '2013' and tgl_bayar between (v_tglJatuhTempo+1) and add_months(v_tglJatuhTempo,11)) then
+    v_dendaTemp := ceil(11 * 0.02 * v_pokokTemp);
+  elsif (thn > '2013' and tgl_bayar between (v_tglJatuhTempo+1) and add_months(v_tglJatuhTempo,12)) then
+    v_dendaTemp := ceil(12 * 0.02 * v_pokokTemp);
+  elsif (thn > '2013' and tgl_bayar between (v_tglJatuhTempo+1) and add_months(v_tglJatuhTempo,13)) then
+    v_dendaTemp := ceil(13 * 0.02 * v_pokokTemp);
+  elsif (thn > '2013' and tgl_bayar between (v_tglJatuhTempo+1) and add_months(v_tglJatuhTempo,14)) then
+    v_dendaTemp := ceil(14 * 0.02 * v_pokokTemp);
+  elsif (thn > '2013' and tgl_bayar between (v_tglJatuhTempo+1) and add_months(v_tglJatuhTempo,15)) then
+    v_dendaTemp := ceil(15 * 0.02 * v_pokokTemp);
+  elsif (thn > '2013' and tgl_bayar >= add_months(v_tglJatuhTempo,15)) then
+    v_dendaTemp := ceil(15 * 0.02 * v_pokokTemp);
+  else v_dendaTemp := 0;
+  end if;
+
+  -- count pembayaran yang sudah masuk
+  select count(kd_propinsi) into v_pembayaranKe
+  from pembayaran_sppt
+  where thn_pajak_sppt = thn
+    and kd_propinsi = v_kdPropinsi
+    and kd_dati2 = v_kdDati2
+    and kd_kecamatan = v_kdKecamatan
+    and kd_kelurahan = v_kdKelurahan
+    and kd_blok = v_kdBlok
+    and no_urut = v_noUrut
+    and kd_jns_op = v_kdJnsOp;
+
+  if(v_pembayaranKe = null) then
+    v_pembayaranKe := 0;
+  end if;
+
+  v_tglRekam := sysdate;
+  v_jamRekam := current_timestamp;
+  v_pembayaranKe := v_pembayaranKe +1;
+
+  -- simpan pembayaran di tabel pembayaran_sppt
+  insert into pembayaran_sppt(kd_propinsi, kd_dati2, kd_kecamatan, kd_kelurahan,
+    kd_blok, no_urut, kd_jns_op, thn_pajak_sppt, pembayaran_sppt_ke,
+    kd_kanwil_bank, kd_kppbb_bank, kd_bank_tunggal, kd_bank_persepsi, kd_tp,
+    denda_sppt, jml_sppt_yg_dibayar, tgl_pembayaran_sppt,
+    tgl_rekam_byr_sppt, nip_rekam_byr_sppt)
+  values(v_kdPropinsi, v_kdDati2, v_kdKecamatan, v_kdKelurahan,
+    v_kdBlok, v_noUrut, v_kdJnsOp, thn, v_pembayaranKe,
+    v_kdKanwilBank, v_kdKppbbBank, v_kdBankTunggal, v_kdBankPersepsi, v_kdTp,
+    v_dendaTemp, (v_pokokTemp + v_dendaTemp), tgl_bayar,
+    v_tglRekam, '060000000');
+  commit;
+
+  -- task: susun ntpd
+  v_panjangNamaWp := length(v_namaWp);
+  v_ntpd := to_char(tgl_bayar,'YYYY') ||
+    substr(v_namaWp,-1,1) || substr(v_znt,1,1) || v_panjangNamaWp ||
+    substr(to_char(v_nilaiSistemBumi),1,1) ||
+    length(to_char(v_nilaiSistemBumi)) || to_char(v_jamRekam,'MI') ||
+    substr(v_namaWp,1,1) || substr(v_znt,-1,1) || to_char(tgl_bayar,'DD') ||
+    substr(to_char(v_nilaiSistemBumi),-1,1) ||
+    substr(to_char(v_pokokTemp),2,1) || to_char(v_jamRekam, 'HH24') ||
+    to_char(tgl_bayar,'MM');
+
+  -- respond untuk pembayaran yang sukses
+  if (v_kdsektor = '02') then
+    v_mataAnggaran := '4.1.1.11.01';
+  else
+    v_mataAnggaran := '4.1.1.11.02';
+  end if;
+
+  v_mataAnggaranSanksi := v_mataAnggaran;
+
+  -- SIMPAN TRANSAKSI DI LOG
+  INSERT INTO LOG_TRX_PEMBAYARAN
+    (NOP, THN, NTPD, MATA_ANGGARAN, POKOK, MA_SANKSI, DENDA, NAMA_WP, ALAMAT_OP, PEMBAYARAN_KE, ip_client)
+  VALUES(nop, thn, v_ntpd, v_mataAnggaran, v_pokokTemp, v_mataAnggaranSanksi, v_dendaTemp, v_namaWp, v_nmKelurahan || ' - ' ||v_nmKecamatan,
+    v_pembayaranKe, ip_Client);
+  commit;
+
+  open c_proses_pembayaran for
+    select nop as nop, thn as thn, v_ntpd as ntpd, v_mataAnggaran as mata_anggaran_pokok,
+      v_pokokTemp as pokok, v_mataAnggaranSanksi as mata_anggaran_sanksi, v_dendaTemp as sanksi,
+      v_namaWp as nama_wp, v_nmKelurahan || ' - ' || v_nmKecamatan as alamat_op
+    from dual;
+
+  <<exit_karena_error>>
+  return;
+end;
+  \end{lstlisting}
+
 \subsection{\textit{STORE PROCEDURE} REVERSAL\_PEMBAYARAN}
 
+\textit{Store procedure} ini akan bertugas melakukan pengembalian data ke kondisi sebelum terjadinya pembayaran. Kode dari \textit{store procedure} ini adalah sebagai berikut :
+
+\begin{lstlisting}
+create or replace procedure reversal_pembayaran(c_data out sys_refcursor,
+  v_nop in varchar, v_thn in varchar, v_ntpd in varchar, v_ip_client in varchar)
+is
+  v_adaData numeric;
+  v_kdPropinsi sppt.kd_propinsi%type;
+  v_kdDati2 sppt.kd_dati2%type;
+  v_kdKecamatan sppt.kd_kecamatan%type;
+  v_kdKelurahan sppt.kd_kelurahan%type;
+  v_kdBlok sppt.kd_blok%type;
+  v_noUrut sppt.no_urut%type;
+  v_kdJnsOp sppt.kd_jns_op%type;
+  v_pembayaranKe log_trx_pembayaran.pembayaran_ke%type;
+
+begin
+  -- error code in c_data
+  -- 01 : NO DATA FOUND
+  -- 02 : DATA GANDA
+
+  -- set parameter nop
+  v_kdPropinsi := substr(v_nop,1,2);
+  v_kdDati2 := substr(v_nop,3,2);
+  v_kdKecamatan := substr(v_nop,5,3);
+  v_kdKelurahan := substr(v_nop,8,3);
+  v_kdBlok := substr(v_nop,11,3);
+  v_noUrut := substr(v_nop,14,4);
+  v_kdJnsOp := substr(v_nop,18,1);
+
+  -- verifikasi data, ada atau ga
+  select count(log_trx.nop)
+  into v_adaData
+  from log_trx_pembayaran log_trx
+  where log_trx.ntpd = v_ntpd
+    and log_trx.nop = v_nop
+    and log_trx.thn = v_thn;
+
+  if(v_adaData = 0) then
+    open c_data for
+      select '01' as kode_error from dual;
+    goto exit_karena_error;
+  elsif(v_adaData > 1) then
+    open c_data for
+      select '02' as kode_error from dual;
+    goto exit_karena_error;
+  end if;
+
+  -- ambil data dari log_trx_pembayaran
+  select pembayaran_ke
+  into v_pembayaranKe
+  from log_trx_pembayaran log_trx
+  where log_trx.nop = v_nop
+    and log_trx.thn = v_thn
+    and log_trx.ntpd = v_ntpd;
+
+  -- hapus data di pembayaran_sppt
+  delete from pembayaran_sppt
+  where thn_pajak_sppt = v_thn
+    and kd_propinsi = v_kdPropinsi
+    and kd_dati2 = v_kdDati2
+    and kd_kecamatan = v_kdKecamatan
+    and kd_kelurahan = v_kdKelurahan
+    and kd_blok = v_kdBlok
+    and no_urut = v_noUrut
+    and kd_jns_op = v_kdJnsOp
+    and pembayaran_sppt_ke = v_pembayaranKe;
+  commit;
+
+  -- ubah isi sppt.status_pembayaran_sppt = '0'
+  update sppt
+  set status_pembayaran_sppt = '0'
+  where thn_pajak_sppt = v_thn
+    and kd_propinsi = v_kdPropinsi
+    and kd_dati2 = v_kdDati2
+    and kd_kecamatan = v_kdKecamatan
+    and kd_kelurahan = v_kdKelurahan
+    and kd_blok = v_kdBlok
+    and no_urut = v_noUrut
+    and kd_jns_op = v_kdJnsOp;
+  commit;
+
+  -- catat di log_reversal
+  insert into log_reversal log_r
+    (log_r.nop, log_r.thn, log_r.ntpd, log_r.ip_client)
+  values (v_nop, v_thn, v_ntpd, v_ip_client);
+  commit;
+
+  open c_data for
+    select v_nop as NOP, v_thn as THN, v_ntpd as NTPD from dual;
+
+  <<exit_karena_error>>
+  return;
+end;
+\end{lstlisting}
 
 \section{\textit{SOURCE CODE BUILD TOOLS}}
+
+Untuk mempermudah pengelolaan ketergantungan pustaka, maka dibutuhkan \textit{build tools}, \textit{build tools} yang sudah teruji kehandalannya dan stabilitas, termasuk cakupan pustaka yang ada, maka maven adalah pilihannya. Berikut adalah kode dari konfigurasi maven yang diperlukan :
+
+\begin{lstlisting}
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>lab.aikibo</groupId>
+  <artifactId>learn-spring-rest-hibernate</artifactId>
+  <packaging>war</packaging>
+  <version>1.0-SNAPSHOT</version>
+  <name>learn-spring-rest-hibernate Maven Webapp</name>
+  <url>http://maven.apache.org</url>
+
+  <properties>
+    <spring.version>4.0.6.RELEASE</spring.version>
+    <hibernate.version>4.3.6.Final</hibernate.version>
+    <log4j.version>1.2.17</log4j.version>
+    <jackson.version>2.7.5</jackson.version>
+    <jdk.version>1.7</jdk.version>
+  </properties>
+
+  <dependencies>
+    <!-- unit testing -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- log4j -->
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>${log4j.version}</version>
+    </dependency>
+
+    <!-- oracle ojdbc -->
+    <dependency>
+      <groupId>oracle</groupId>
+      <artifactId>ojdbc14</artifactId>
+      <version>10.2.0.4</version>
+    </dependency>
+
+    <!-- spring -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-core</artifactId>
+      <version>${spring.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
+      <version>${spring.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-webmvc</artifactId>
+      <version>${spring.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-tx</artifactId>
+      <version>${spring.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-orm</artifactId>
+      <version>${spring.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+      <version>${spring.version}</version>
+    </dependency>
+
+    <!-- hibernate -->
+    <dependency>
+      <groupId>org.hibernate</groupId>
+      <artifactId>hibernate-core</artifactId>
+      <version>${hibernate.version}</version>
+    </dependency>
+    
+    <!-- bonecp -->
+    <dependency>
+      <groupId>com.jolbox</groupId>
+      <artifactId>bonecp-provider</artifactId>
+      <version>0.8.0-alpha1</version>
+    </dependency>
+    <dependency>
+      <groupId>com.jolbox</groupId>
+      <artifactId>bonecp</artifactId>
+      <version>0.8.0.RELEASE</version>
+    </dependency>
+
+    <!-- hikaricp, pengganti bonecp -->
+    <dependency>
+      <groupId>com.zaxxer</groupId>
+      <artifactId>HikariCP</artifactId>
+      <version>2.4.7</version>
+    </dependency>
+
+    <!-- jsr303 validation -->
+    <dependency>
+      <groupId>javax.validation</groupId>
+      <artifactId>validation-api</artifactId>
+      <version>1.1.0.Final</version>
+    </dependency>
+    <dependency>
+      <groupId>org.hibernate</groupId>
+      <artifactId>hibernate-validator</artifactId>
+      <version>5.1.3.Final</version>
+    </dependency>
+
+    <!-- servlet + jsp + jstl -->
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <version>3.1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet.jsp</groupId>
+      <artifactId>javax.servlet.jsp-api</artifactId>
+      <version>2.3.1</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>jstl</artifactId>
+      <version>1.2</version>
+    </dependency>
+
+    <!-- testing dependencies -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-test</artifactId>
+      <version>${spring.version}</version>
+    </dependency>
+
+    <!-- mocking -->
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>2.2.9</version>
+    </dependency>
+
+    <!-- jackson for convert POJO to json format -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+
+    <!-- joda time -->
+    <dependency>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
+      <version>2.9.4</version>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>learn-spring-rest-hibernate</finalName>
+
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.2</version>
+        <configuration>
+          <source>${jdk.version}</source>
+          <target>${jdk.version}</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-war-plugin</artifactId>
+        <version>2.4</version>
+        <configuration>
+          <warSourceDirectory>src/main/webapp</warSourceDirectory>
+          <warName>Spring-Rest-Hibernate-Pbb</warName>
+          <failOnMissingWebXml>false</failOnMissingWebXml>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+\end{lstlisting}
 
 
 \section{\textit{SOURCE CODE} KONFIGURASI application.properties}
 
+\textit{File} application.properties ini adalah \textit{file} konfigurasi yang digunakan dalam aplikasi nantinya. Isi dari \textit{file} ini adalah sebagai berikut :
+
+\begin{lstlisting}
+jdbc.driverClassName = oracle.jdbc.driver.OracleDriver
+jdbc.url = jdbc:oracle:thin:***/***@192.168.2.7:1521/SISMIOP
+jdbc.username = PBB
+jdbc.password = RAHASIAPBB
+
+hibernate.dialect = org.hibernate.dialect.Oracle10gDialect
+hibernate.show_sql = true
+hibernate.format_sql = true
+
+# for bonecp
+providerClass = com.zaxxer.hikari.hibernate.HikariConnectionProvider
+minIdle = 2
+maxPool = 30
+dataSourceClassName = oracle.jdbc.pool.OracleDataSource
+url = jdbc:oracle:thin:***/***@192.168.2.7:1521/sismiopbck
+username = ***
+password = ***
+implicitCache = true
+\end{lstlisting}
+
 
 \section{\textit{SOURCE CODE} KONFIGURASI log4j.properties}
+
+Kode pada \textit{file} log4j.properties ini adalah untuk mengatur keluaran dari \textit{log} atau pencatat aktivitas pada saat sistem aplikasi berjalan, apakah akan dikeluarkan ke monitor, atau dicatatkan dalam \textit{file} tertentu. Isi dari kode pada \textit{file} log4j.properties ini adalah sebagai berikut :
+
+\begin{lstlisting}
+# Root logger option
+#log4j.rootLogger=TRACE, DEBUG, stdout, file
+log4j.rootLogger=DEBUG, stdout, file
+
+log4j.logger.org.hibernate.SQL = debug
+log4j.logger.org.hibernate.type=trace
+
+# Redirect log messages to console
+log4j.appender.stdout=org.apache.log4j.ConsoleAppender
+log4j.appender.stdout.Target=System.out
+log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
+log4j.appender.stdout.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n
+
+# Redirect log messages to a log file, support file rolling.
+log4j.appender.file=org.apache.log4j.RollingFileAppender
+log4j.appender.file.File=/var/lib/tomcat8/logs/log4j-app.log
+log4j.appender.file.MaxFileSize=5MB
+log4j.appender.file.MaxBackupIndex=10
+log4j.appender.file.layout=org.apache.log4j.PatternLayout
+log4j.appender.file.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n
+\end{lstlisting}
 
 
 \section{\textit{SOURCE CODE} AppConfig.java}
 
+Kode pada \textit{file} AppConfig.java adalah kode berisi konfigurasi dari \textit{framework} Spring. Isi dari kode tersebut adalah sebagai berikut :
+
+\begin{lstlisting}
+package lab.aikibo.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+
+import lab.aikibo.model.Sppt;
+import lab.aikibo.dao.SpptDao;
+import lab.aikibo.dao.SpptDaoImpl;
+
+@Configuration
+@EnableWebMvc
+@ComponentScan(basePackages = {"lab.aikibo"})
+@Import({HibernateConfiguration.class})
+public class AppConfig {
+
+}
+\end{lstlisting}
+
+Kelas AppConfig ini memang kosong, tidak perlu dilakukan pengaturan lain karena pengaturan-pengaturan dasar berada pada tanda \textit{annotation} di atas kelas.
+
 
 \section{\textit{SOURCE CODE} HibernateConfiguration.java}
 
+Kelas HibernateConfiguration ini adalah tempat untuk konfigurasi \textit{framework} Hibernate yang nantinya berkomunikasi langsung dengan basis data. Kode dari kelas HibernateConfiguration ini adalah sebagai berikut :
+
+\begin{lstlisting}
+package lab.aikibo.config;
+
+import java.util.Properties;
+
+import javax.sql.DataSource;
+
+import org.hibernate.SessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.Environment;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.orm.hibernate4.HibernateTransactionManager;
+import org.springframework.orm.hibernate4.LocalSessionFactoryBean;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+
+import com.zaxxer.hikari.HikariDataSource;
+
+import com.jolbox.bonecp.BoneCPDataSource;
+
+/**
+ * seharusnya ditambahkan bonecp
+ *
+ * @author Tamami
+ */
+@Configuration
+@EnableTransactionManagement
+@ComponentScan({"lab.aikibo.config"})
+@PropertySource(value = {"classpath:application.properties"})
+public class HibernateConfiguration {
+  @Autowired
+  private Environment environment;
+
+  @Bean
+  public LocalSessionFactoryBean sessionFactory() {
+    LocalSessionFactoryBean sessionFactory = new LocalSessionFactoryBean();
+    sessionFactory.setDataSource(boneCPDataSource());
+    sessionFactory.setPackagesToScan(new String[] {"lab.aikibo.model"});
+    sessionFactory.setHibernateProperties(hibernateProperties());
+    return sessionFactory;
+  }
+
+  @Bean
+  public BoneCPDataSource boneCPDataSource() {
+    BoneCPDataSource ds = new BoneCPDataSource();
+    ds.setDriverClass(environment.getRequiredProperty("jdbc.driverClassName"));
+    ds.setJdbcUrl(environment.getRequiredProperty("jdbc.url"));
+    ds.setUsername(environment.getRequiredProperty("jdbc.username"));
+    ds.setPassword(environment.getRequiredProperty("jdbc.password"));
+
+    ds.setIdleConnectionTestPeriodInMinutes(60);
+    ds.setIdleMaxAgeInMinutes(420);
+    ds.setMaxConnectionsPerPartition(30);
+    ds.setMaxConnectionsPerPartition(10);
+    ds.setPartitionCount(10);
+    ds.setAcquireIncrement(5);
+    ds.setStatementsCacheSize(100);
+    ds.setReleaseHelperThreads(3);
+    return ds;
+  }
+
+  @Bean
+  public DataSource dataSource() {
+    DriverManagerDataSource dataSource = new DriverManagerDataSource();
+    dataSource.setDriverClassName(environment.getRequiredProperty("jdbc.driverClassName"));
+    dataSource.setUrl(environment.getRequiredProperty("jdbc.url"));
+    dataSource.setUsername(environment.getRequiredProperty("jdbc.username"));
+    dataSource.setPassword(environment.getRequiredProperty("jdbc.password"));
+
+    return dataSource;
+  }
+
+  private Properties hibernateProperties() {
+    Properties properties = new Properties();
+    properties.put("hibernate.dialect", environment.getRequiredProperty("hibernate.dialect"));
+    properties.put("hibernate.show_sql", environment.getRequiredProperty("hibernate.show_sql"));
+    properties.put("hibernate.format_sql", environment.getRequiredProperty("hibernate.format_sql"));
+
+    properties.put("hibernate.hbm2ddl.auto", "validate");
+
+    return properties;
+  }
+
+  @Bean
+  @Autowired
+  public HibernateTransactionManager transactionManager(SessionFactory sf) {
+    HibernateTransactionManager txManager = new HibernateTransactionManager();
+    txManager.setSessionFactory(sf);
+    return txManager;
+  }
+}
+\end{lstlisting}
 
 \section{\textit{SOURCE CODE} SerialConstant.java}
+
+Kelas SerialConstant akan berisi kode untuk kelas yang bersifat Serializable, karena setiap kelas yang mengimplementasikan Serializable memerlukan identitas untuk instan yang terbentuk. Berikut adalah isi dari kode kelas SerialConstant :
+
+\begin{lstlisting}
+package lab.aikibo.constant;
+
+public class SerialConstant {
+
+  public static final long SERIAL_SPPT = 1L;
+  public static final long SERIAL_SPPT_PK = 2L;
+  public static final long SERIAL_SPPT_SISMIOP = 3L;
+  public static final long SERIAL_SPPT_SISMIOP_PK = 4L;
+  public static final long SERIAL_REF_KELURAHAN = 5L;
+  public static final long SERIAL_REF_KELURAHAN_PK = 6L;
+  public static final long SERIAL_REF_KECAMATAN = 7L;
+  public static final long SERIAL_REF_KECAMATAN_PK = 8L;
+  public static final long SERIAL_PEMBAYARAN_SPPT = 9L;
+  public static final long SERIAL_PEMBAYARAN_SPPT_PK = 10L;
+  public static final long SERIAL_REVERSAL_PEMBAYARAN = 11L;
+
+}
+\end{lstlisting}
 
 
 \section{\textit{SOURCE CODE} StatusRespond.java}
 
+Kelas StatusRespond ini akan menampung informasi kode respon yang akan diberikan ke \textit{client}, agar memudahkan sistem aplikasi melakukan respon dan mencegah redundansi baris kode yang sama berulang-ulang. Kode dari kelas StatusRespond ini adalah sebagai berikut :
+
+\begin{lstlisting}
+package lab.aikibo.constant;
+
+public class StatusRespond {
+
+  public static final int APPROVED = 1;
+  public static final int DATA_INQ_NIHIL = 10;
+  public static final int TAGIHAN_TELAH_TERBAYAR = 13;
+  public static final int JUMLAH_SETORAN_NIHIL = 03; // pbb = 0 rupiah
+  public static final int DATABASE_ERROR = 04;
+  public static final int ERROR_PEMBUATAN_NTPD = 05;
+  public static final int JUMLAH_PEMBAYARAN_BUKAN_ANGKA = 31;
+  public static final int TGL_JAM_BAYAR_LD_TGL_JAM_KIRIM = 32;
+  public static final int TGL_KIRIM_REV_LD_1H_ORI = 33;
+  public static final int PROC_CODE_NOT_VALID = 34;
+  public static final int MASA_PAJAK_BUKAN_ANGKA = 35;
+  public static final int THN_PAJAK_BUKAN_ANGKA = 36;
+
+}
+\end{lstlisting}
+
 
 \section{\textit{SOURCE CODE} SpptRestController.java}
+
+
 
 
 \section{\textit{SOUCE CODE} StoreProceduresDao.java}
